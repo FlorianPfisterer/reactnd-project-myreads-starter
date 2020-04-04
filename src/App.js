@@ -50,14 +50,16 @@ class BooksApp extends React.Component {
   }
 
   onSearchBooks = (query) => {
-    console.log(query);
     BooksAPI.search(query)
       .then((searchedBooks) => {
         if (!searchedBooks || searchedBooks.error) {
           console.log(searchedBooks.error);
           this.setState({ searchedBooks: [] });
         } else {
-          this.setState({ searchedBooks });
+          this.setState(({ books }) => ({ searchedBooks: searchedBooks.map(book => ({
+            ...book,
+            shelf: books.find(b => b.id === book.id) ? books.find(b => b.id === book.id).shelf : book.shelf
+          })) }));
         }
       });
   }
