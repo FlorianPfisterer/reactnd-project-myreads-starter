@@ -2,7 +2,11 @@ import React from 'react';
 import Bookshelf from './Bookshelf';
 
 const BooksList = (props) => {
-    const { shelves, books } = props;
+    const {
+        shelves,
+        books,
+        onMoveBook
+    } = props;
 
     return (<div className="list-books-content">
         {shelves.map(shelf => (
@@ -11,6 +15,7 @@ const BooksList = (props) => {
                 title={shelf.title}
                 books={books.filter(book => book.shelf === shelf.id)}
                 shelves={shelves}
+                onMoveBook={onMoveBook}
             />
         ))}
     </div>);
