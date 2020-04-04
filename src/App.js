@@ -11,7 +11,8 @@ class BooksApp extends React.Component {
     super(props);
 
     this.state = {
-      books: []
+      books: [],
+      searchedBooks: []
     };
   }
 
@@ -20,29 +21,60 @@ class BooksApp extends React.Component {
     this.setState({ books });
   }
 
-  onMoveBook = (id, newShelf) => {
-    BooksAPI.update({ id }, newShelf)
-      .then(() => this.setState(({ books }) => ({
-        books: books.map((book) => {
-          if (book.id === id) {
-            return {
-              ...book,
-              shelf: newShelf
-            }
-          } 
-          return book;
-        })
-      })));
+  onMoveBook = (updatedBook, newShelf) => {
+    if (updatedBook.shelf === newShelf) { return; }
+
+    BooksAPI.update(updatedBook, newShelf)
+      .then(() => {
+        const getNewBooks = (books) => {
+          if (books.find(b => b.id === updatedBook.id)) {
+            return books.map(b => ({ ...b, shelf: b.id === updatedBook.id ? newShelf : b.shelf }));
+          } else {
+            return books.concat([{ ...updatedBook, shelf: newShelf }]);
+          }
+        }
+
+        this.setState(({ books }) => ({
+          books: getNewBooks(books)
+        }));
+      });
+  }
+
+  onMoveSearchedBook = (book, newShelf) => {
+    this.onMoveBook(book, newShelf);
+
+    // also update the search list
+    this.setState(({ searchedBooks }) => ({
+      searchedBooks: searchedBooks.map(b => ({ ...b, shelf: b.id === book.id ? newShelf : b.shelf }))
+    }));
+  }
+
+  onSearchBooks = (query) => {
+    console.log(query);
+    BooksAPI.search(query)
+      .then((searchedBooks) => {
+        if (!searchedBooks || searchedBooks.error) {
+          console.log(searchedBooks.error);
+          this.setState({ searchedBooks: [] });
+        } else {
+          this.setState({ searchedBooks });
+        }
+      });
   }
 
   render() {
-    const { books } = this.state;
+    const { books, searchedBooks } = this.state;
 
     return (
       <div className="app">
          <BrowserRouter>
           <Route path='/search' render={() => (
-            <SearchBooks />
+            <SearchBooks 
+              shelves={shelves}
+              onSearchBooks={this.onSearchBooks}
+              books={searchedBooks}
+              onMoveBook={this.onMoveSearchedBook}
+            />
           )} />
           <Route exact path='/' render={() => (
             <div className="list-books">
